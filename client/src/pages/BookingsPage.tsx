@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Calendar, Users, User, CheckCircle2, 
   MapPin, Shield, Info, AlertCircle, FileText, Phone 
@@ -9,6 +10,7 @@ import { mockBookings } from '../data/mockData';
 import { TripRecord } from '../types';
 
 export default function BookingsPage() {
+  const { t } = useTranslation();
   // Form State
   const [purpose, setPurpose] = useState('');
   const [visitedBefore, setVisitedBefore] = useState<'yes' | 'no' | ''>('');
@@ -136,9 +138,9 @@ export default function BookingsPage() {
     <div className="pb-24 pt-6 px-4 max-w-lg mx-auto bg-gray-50 dark:bg-gray-900 min-h-screen font-sans space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Trip Information</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('bookings.title')}</h1>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Record your travel details and itinerary for emergency tracking and tourist safety monitoring.
+          {t('bookings.subtitle')}
         </p>
       </div>
 
@@ -157,7 +159,7 @@ export default function BookingsPage() {
             <FileText size={20} />
           </div>
           <div>
-            <h2 className="text-base font-bold text-gray-900 dark:text-white">Register Travel Details</h2>
+            <h2 className="text-base font-bold text-gray-900 dark:text-white">{t('bookings.newRecord')}</h2>
             <p className="text-xs text-gray-400">Keeps your travel itinerary on official record</p>
           </div>
         </div>
@@ -385,7 +387,7 @@ export default function BookingsPage() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Travel Records</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t('bookings.myBookings')}</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Saved travel information kept on record for safety and emergency coordination
             </p>
@@ -483,15 +485,6 @@ export default function BookingsPage() {
                     </span>
                     <h4 className="font-bold text-gray-900 dark:text-white mt-1 text-sm">{b.provider}</h4>
                   </div>
-                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                    b.status === 'completed' 
-                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' 
-                      : b.status === 'cancelled' 
-                      ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' 
-                      : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                  }`}>
-                    {b.status.toUpperCase()}
-                  </span>
                 </div>
 
                 <div className="text-xs text-gray-500 dark:text-gray-400 space-y-0.5">

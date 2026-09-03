@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Settings, Edit3, Star, LogOut, ShieldCheck, MapPin } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import ProfileCompletion from '../components/ProfileCompletion';
@@ -9,6 +10,7 @@ import { calculateProfileCompletion } from '../utils/profileCompletion';
 export default function AccountPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleLogout = () => {
     logout();
@@ -44,46 +46,46 @@ export default function AccountPage() {
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm mb-6 border border-gray-100 dark:border-gray-700 space-y-4">
-        <h3 className="font-bold text-gray-900 dark:text-white mb-2">Personal Information</h3>
+        <h3 className="font-bold text-gray-900 dark:text-white mb-2">{t('account.personalInfo')}</h3>
         <div className="grid grid-cols-3 text-sm border-b border-gray-100 dark:border-gray-700 pb-3">
-          <span className="text-gray-500 col-span-1">Age</span>
-          <span className="font-medium dark:text-white col-span-2">{user.age || 'Not set'}</span>
+          <span className="text-gray-500 col-span-1">{t('account.age')}</span>
+          <span className="font-medium dark:text-white col-span-2">{user.age || t('account.notSet')}</span>
         </div>
         <div className="grid grid-cols-3 text-sm border-b border-gray-100 dark:border-gray-700 pb-3">
-          <span className="text-gray-500 col-span-1">Gender</span>
-          <span className="font-medium dark:text-white col-span-2">{user.gender || 'Not set'}</span>
+          <span className="text-gray-500 col-span-1">{t('account.gender')}</span>
+          <span className="font-medium dark:text-white col-span-2">{user.gender || t('account.notSet')}</span>
         </div>
         <div className="grid grid-cols-3 text-sm border-b border-gray-100 dark:border-gray-700 pb-3">
-          <span className="text-gray-500 col-span-1">Address</span>
-          <span className="font-medium dark:text-white col-span-2">{user.address || 'Not set'}</span>
+          <span className="text-gray-500 col-span-1">{t('account.address')}</span>
+          <span className="font-medium dark:text-white col-span-2">{user.address || t('account.notSet')}</span>
         </div>
         {user.email && (
           <div className="grid grid-cols-3 text-sm border-b border-gray-100 dark:border-gray-700 pb-3">
-            <span className="text-gray-500 col-span-1">Email</span>
+            <span className="text-gray-500 col-span-1">{t('account.email')}</span>
             <span className="font-medium dark:text-white col-span-2 truncate">{user.email}</span>
           </div>
         )}
         {user.dateOfBirth && (
           <div className="grid grid-cols-3 text-sm border-b border-gray-100 dark:border-gray-700 pb-3">
-            <span className="text-gray-500 col-span-1">Birth Date</span>
+            <span className="text-gray-500 col-span-1">{t('account.birthDate')}</span>
             <span className="font-medium dark:text-white col-span-2">
               {typeof user.dateOfBirth === 'string' ? user.dateOfBirth.split('T')[0] : new Date(user.dateOfBirth).toLocaleDateString()}
             </span>
           </div>
         )}
         <div className="grid grid-cols-3 text-sm border-b border-gray-100 dark:border-gray-700 pb-3">
-          <span className="text-gray-500 col-span-1">Mobile</span>
+          <span className="text-gray-500 col-span-1">{t('account.mobile')}</span>
           <span className="font-medium dark:text-white col-span-2">{user.mobile}</span>
         </div>
         <div className="grid grid-cols-3 text-sm border-b border-gray-100 dark:border-gray-700 pb-3">
-          <span className="text-gray-500 col-span-1">Identity</span>
+          <span className="text-gray-500 col-span-1">{t('account.identity')}</span>
           <span className="font-medium dark:text-white col-span-2 flex items-center">
             XXXX-XXXX-{user.identityMasked?.slice(-4) || 'XXXX'}
-            <span className="ml-2 text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full dark:bg-green-900/30 dark:text-green-400">Verified</span>
+            <span className="ml-2 text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full dark:bg-green-900/30 dark:text-green-400">{t('account.verified')}</span>
           </span>
         </div>
         <div className="grid grid-cols-3 text-sm">
-          <span className="text-gray-500 col-span-1">Language</span>
+          <span className="text-gray-500 col-span-1">{t('account.language')}</span>
           <span className="font-medium dark:text-white col-span-2 capitalize">{user.preferredLanguage || 'English'}</span>
         </div>
       </div>
@@ -92,25 +94,25 @@ export default function AccountPage() {
         <button onClick={() => navigate('/profile/edit')} className="w-full px-5 py-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
           <div className="flex items-center">
             <Edit3 className="w-5 h-5 text-gray-500 mr-3" />
-            <span className="font-medium text-gray-900 dark:text-white">Edit Profile</span>
+            <span className="font-medium text-gray-900 dark:text-white">{t('account.editProfile')}</span>
           </div>
         </button>
         <button onClick={() => navigate('/account/settings')} className="w-full px-5 py-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
           <div className="flex items-center">
             <Settings className="w-5 h-5 text-gray-500 mr-3" />
-            <span className="font-medium text-gray-900 dark:text-white">Settings</span>
+            <span className="font-medium text-gray-900 dark:text-white">{t('account.settings')}</span>
           </div>
         </button>
         <button onClick={() => navigate('/account/review')} className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
           <div className="flex items-center">
             <Star className="w-5 h-5 text-gray-500 mr-3" />
-            <span className="font-medium text-gray-900 dark:text-white">Submit Review</span>
+            <span className="font-medium text-gray-900 dark:text-white">{t('account.review')}</span>
           </div>
         </button>
       </div>
 
       <Button onClick={handleLogout} variant="outline" className="w-full border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-900/20 py-3">
-        <LogOut className="w-5 h-5 mr-2" /> Logout
+        <LogOut className="w-5 h-5 mr-2" /> {t('account.logout')}
       </Button>
     </div>
   );

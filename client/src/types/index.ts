@@ -80,6 +80,26 @@ export interface GuideBooking {
   bookedAt: string;
 }
 
+export interface DestinationPlace {
+  id: string;
+  name: string;
+  location: string;
+  image: string;
+  description: string;
+  highlights?: string[];
+}
+
+export interface GuideRequest {
+  id: string;
+  destination: string;
+  destinationLocation: string;
+  destinationImage?: string;
+  date: string;
+  time: string;
+  numberOfPeople: number;
+  createdAt: string;
+}
+
 export interface Trip {
   _id: string;
   userId: string;

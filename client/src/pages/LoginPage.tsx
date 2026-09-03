@@ -40,18 +40,73 @@ export default function LoginPage() {
       const selected = countries.find(c => c.code === formData.country || c.name === formData.country);
       if (selected) {
         setCountryCode(selected.dialCode || '');
-        setIdentityType(selected.code === 'IN' ? 'aadhaar' : 'passport');
+        const newType = (selected.code === 'IN' || selected.name === 'India') ? 'aadhaar' : 'passport';
+        setIdentityType(newType);
+
+        // Dynamic country change:
+        // If switched to India, clean non-digits and trim to 12 digits
+        if (newType === 'aadhaar' && formData.identityId) {
+          const sanitized = formData.identityId.replace(/\D/g, '').slice(0, 12);
+          if (sanitized !== formData.identityId) {
+            setFormData(prev => ({ ...prev, identityId: sanitized }));
+          }
+        }
       }
     }
   }, [formData.country]);
+
+  const handleIdentityKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (identityType === 'aadhaar') {
+      // Allow navigation and control keys
+      if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)) {
+        return;
+      }
+      // Allow keyboard shortcuts (Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+Z, etc.)
+      if (e.ctrlKey || e.metaKey) {
+        return;
+      }
+      // Block non-digits (letters, spaces, punctuation, special chars)
+      if (!/^[0-9]$/.test(e.key)) {
+        e.preventDefault();
+      }
+    }
+  };
+
+  const handleIdentityPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    if (identityType === 'aadhaar') {
+      e.preventDefault();
+      const pastedText = e.clipboardData.getData('text');
+      const numericOnly = pastedText.replace(/\D/g, '').slice(0, 12);
+      setFormData(prev => ({
+        ...prev,
+        identityId: numericOnly
+      }));
+      if (errors.identityId) {
+        setErrors(prev => ({ ...prev, identityId: '' }));
+      }
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
     const checked = type === 'checkbox' ? (e.target as HTMLInputElement).checked : undefined;
     
+    let sanitizedValue = value;
+    if (name === 'identityId') {
+      if (identityType === 'aadhaar') {
+        // Indian users: allow ONLY numeric digits (0-9), max 12 digits
+        // If user pastes more than 12 digits, automatically keep only first 12
+        // Do not allow letters, spaces, or special characters
+        sanitizedValue = value.replace(/\D/g, '').slice(0, 12);
+      } else {
+        // Foreign users: allow passport numbers up to 20 characters
+        sanitizedValue = value.slice(0, 20);
+      }
+    }
+
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : sanitizedValue
     }));
     
     if (errors[name]) {
@@ -68,7 +123,12 @@ export default function LoginPage() {
     if (!formData.country) newErrors.country = 'Country is required';
     if (!formData.address.trim()) newErrors.address = 'Address is required';
     if (!formData.mobileNumber.trim()) newErrors.mobileNumber = 'Mobile Number is required';
-    if (!formData.identityId.trim()) newErrors.identityId = `${identityType} is required`;
+    
+    if (!formData.identityId.trim()) {
+      newErrors.identityId = identityType === 'aadhaar' ? 'Aadhaar Number is required' : 'Passport Number is required';
+    } else if (identityType === 'aadhaar' && formData.identityId.length !== 12) {
+      newErrors.identityId = 'Aadhaar Number must be exactly 12 digits';
+    }
     
     if (formData.hasEmergencyContact) {
       if (!formData.contactName.trim()) newErrors.contactName = 'Contact Name is required';
@@ -182,7 +242,7 @@ export default function LoginPage() {
             />
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mobile Number *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mobile Number</label>
               <div className="flex">
                 <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300">
                   {countryCode}
@@ -201,17 +261,23 @@ export default function LoginPage() {
 
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Identity ID *</label>
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                  {identityType}
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {identityType === 'aadhaar' ? 'Identity ID (Aadhaar Number)' : 'Identity ID (Passport Number)'}
+                </label>
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200">
+                  {identityType === 'aadhaar' ? 'Aadhaar (12 Digits)' : 'Passport'}
                 </span>
               </div>
               <Input
                 name="identityId"
                 value={formData.identityId}
                 onChange={handleChange}
+                onKeyDown={handleIdentityKeyDown}
+                onPaste={handleIdentityPaste}
+                maxLength={identityType === 'aadhaar' ? 12 : 20}
+                inputMode={identityType === 'aadhaar' ? 'numeric' : 'text'}
                 error={errors.identityId}
-                placeholder={`Enter ${identityType} Number`}
+                placeholder={identityType === 'aadhaar' ? 'Enter 12-digit Aadhaar Number' : 'Enter Passport Number'}
                 required
               />
             </div>

@@ -16,9 +16,9 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { user, updateUser } = useAuth();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
 
-  // Language state
+  // Language state initialized from localStorage -> user -> i18n -> 'en'
   const [currentLang, setCurrentLang] = useState<string>(() => {
     return localStorage.getItem('language') || user?.preferredLanguage || i18n.language || 'en';
   });
@@ -58,10 +58,11 @@ export default function SettingsPage() {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  // Sync language with i18n on mount
+  // Sync language with i18n on mount & when currentLang changes
   useEffect(() => {
-    if (i18n.language !== currentLang) {
-      i18n.changeLanguage(currentLang);
+    const saved = localStorage.getItem('language') || currentLang || 'en';
+    if (i18n.language !== saved) {
+      i18n.changeLanguage(saved);
     }
   }, [currentLang, i18n]);
 
@@ -181,7 +182,7 @@ export default function SettingsPage() {
           >
             <ArrowLeft size={20} />
           </button>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Settings</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t('settings.title')}</h1>
         </div>
       </div>
 
@@ -191,14 +192,14 @@ export default function SettingsPage() {
         {savedSuccess && (
           <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-300 px-4 py-3 rounded-2xl flex items-center space-x-3 text-sm animate-fade-in shadow-sm">
             <CheckCircle2 size={18} className="text-green-600 dark:text-green-400 flex-shrink-0" />
-            <span className="font-medium">Settings saved successfully!</span>
+            <span className="font-medium">{t('settings.savedSuccess')}</span>
           </div>
         )}
 
         {/* 1. Appearance (Theme) */}
         <section>
           <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 px-1 flex items-center">
-            <Sun size={14} className="mr-1.5" /> Appearance
+            <Sun size={14} className="mr-1.5" /> {t('settings.appearance')}
           </h2>
           <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700 p-3">
             <div className="grid grid-cols-3 gap-2">
@@ -212,7 +213,7 @@ export default function SettingsPage() {
                 }`}
               >
                 <Sun size={22} className="mb-2" />
-                <span className="text-xs">Light</span>
+                <span className="text-xs">{t('settings.light')}</span>
               </button>
               
               <button 
@@ -225,7 +226,7 @@ export default function SettingsPage() {
                 }`}
               >
                 <Moon size={22} className="mb-2" />
-                <span className="text-xs">Dark</span>
+                <span className="text-xs">{t('settings.dark')}</span>
               </button>
               
               <button 
@@ -238,7 +239,7 @@ export default function SettingsPage() {
                 }`}
               >
                 <Smartphone size={22} className="mb-2" />
-                <span className="text-xs">System</span>
+                <span className="text-xs">{t('settings.system')}</span>
               </button>
             </div>
           </div>
@@ -247,7 +248,7 @@ export default function SettingsPage() {
         {/* 2. Language */}
         <section>
           <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 px-1 flex items-center">
-            <Globe size={14} className="mr-1.5" /> Language
+            <Globe size={14} className="mr-1.5" /> {t('settings.language')}
           </h2>
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
             <button
@@ -260,7 +261,7 @@ export default function SettingsPage() {
                   <Globe size={20} />
                 </div>
                 <div>
-                  <div className="font-semibold text-gray-900 dark:text-white text-sm">Preferred Language</div>
+                  <div className="font-semibold text-gray-900 dark:text-white text-sm">{t('settings.preferredLanguage')}</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                     {currentLangObj.name} ({currentLangObj.nativeName})
                   </div>
@@ -279,14 +280,14 @@ export default function SettingsPage() {
         {/* 3. Notifications */}
         <section>
           <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 px-1 flex items-center">
-            <Bell size={14} className="mr-1.5" /> Notifications
+            <Bell size={14} className="mr-1.5" /> {t('settings.notifications')}
           </h2>
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden divide-y divide-gray-100 dark:divide-gray-700">
             {/* Push */}
             <div className="flex items-center justify-between p-4">
               <div>
-                <div className="font-medium text-gray-900 dark:text-white text-sm">Push Notifications</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Live trip, cab arrival and safety alerts</div>
+                <div className="font-medium text-gray-900 dark:text-white text-sm">{t('settings.pushNotifications')}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('settings.pushDesc')}</div>
               </div>
               <button 
                 type="button"
@@ -305,8 +306,8 @@ export default function SettingsPage() {
             {/* Email */}
             <div className="flex items-center justify-between p-4">
               <div>
-                <div className="font-medium text-gray-900 dark:text-white text-sm">Email Alerts</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Booking receipts and travel itineraries</div>
+                <div className="font-medium text-gray-900 dark:text-white text-sm">{t('settings.emailAlerts')}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('settings.emailDesc')}</div>
               </div>
               <button 
                 type="button"
@@ -325,8 +326,8 @@ export default function SettingsPage() {
             {/* SMS */}
             <div className="flex items-center justify-between p-4">
               <div>
-                <div className="font-medium text-gray-900 dark:text-white text-sm">SMS Updates</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Security verification OTPs and urgent safety notices</div>
+                <div className="font-medium text-gray-900 dark:text-white text-sm">{t('settings.smsUpdates')}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('settings.smsDesc')}</div>
               </div>
               <button 
                 type="button"
@@ -347,7 +348,7 @@ export default function SettingsPage() {
         {/* 4. Travel Preferences (Tourist Features) */}
         <section>
           <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 px-1 flex items-center">
-            <Map size={14} className="mr-1.5" /> Tourist Travel Preferences
+            <Map size={14} className="mr-1.5" /> {t('settings.touristPreferences')}
           </h2>
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden divide-y divide-gray-100 dark:divide-gray-700">
             {/* Offline Maps */}
@@ -358,13 +359,13 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <div className="flex items-center space-x-2">
-                    <span className="font-medium text-gray-900 dark:text-white text-sm">Offline Maps Preload</span>
+                    <span className="font-medium text-gray-900 dark:text-white text-sm">{t('settings.offlineMaps')}</span>
                     <span className="text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full">
                       {offlineMaps ? 'Active' : 'Offline'}
                     </span>
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    Preload and cache Jaipur regional routes for travel without cellular network
+                    {t('settings.offlineMapsDesc')}
                   </div>
                 </div>
               </div>
@@ -390,13 +391,13 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <div className="flex items-center space-x-2">
-                    <span className="font-medium text-gray-900 dark:text-white text-sm">Emergency Assistance</span>
+                    <span className="font-medium text-gray-900 dark:text-white text-sm">{t('settings.emergencyAssistance')}</span>
                     <span className="text-[10px] font-semibold bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full">
                       {emergencyAlerts ? 'Protected' : 'Disabled'}
                     </span>
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    Send quick SOS coordinates to Rajasthan tourist helpline & local police
+                    {t('settings.emergencyAssistanceDesc')}
                   </div>
                 </div>
               </div>
@@ -419,12 +420,12 @@ export default function SettingsPage() {
         {/* 5. Privacy & Security */}
         <section>
           <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 px-1 flex items-center">
-            <Shield size={14} className="mr-1.5" /> Privacy & Security
+            <Shield size={14} className="mr-1.5" /> {t('settings.privacySecurity')}
           </h2>
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden divide-y divide-gray-100 dark:divide-gray-700">
             {/* Profile Visibility */}
             <div className="p-4 space-y-2">
-              <label className="block text-sm font-medium text-gray-900 dark:text-white">Profile Visibility</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-white">{t('settings.profileVisibility')}</label>
               <select 
                 value={privacy} 
                 onChange={(e) => handlePrivacyChange(e.target.value)}
@@ -445,7 +446,7 @@ export default function SettingsPage() {
               <div className="flex items-center space-x-3">
                 <Lock size={18} className="text-gray-500 dark:text-gray-400" />
                 <div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">Change Password</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.changePassword')}</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">Account login credentials</div>
                 </div>
               </div>
@@ -482,7 +483,7 @@ export default function SettingsPage() {
         {/* Save Button */}
         <div className="pt-2">
           <Button onClick={handleSaveAll} className="w-full py-3.5 shadow-md">
-            Save Settings
+            {t('settings.saveSettings')}
           </Button>
         </div>
       </div>
@@ -494,7 +495,7 @@ export default function SettingsPage() {
           setIsLangModalOpen(false);
           setLangSearch('');
         }}
-        title="Select Language"
+        title={t('settings.language')}
         size="md"
       >
         <div className="space-y-4">
@@ -511,60 +512,117 @@ export default function SettingsPage() {
           </div>
 
           <div className="max-h-[60vh] overflow-y-auto space-y-4 pr-1">
-            {/* Indian Languages */}
-            {filteredIndian.length > 0 && (
+            {/* 1. Fully Supported Languages (English & Hindi) */}
+            {([
+              { code: 'en', name: 'English', nativeName: 'English' },
+              { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' }
+            ].filter(l => 
+              l.name.toLowerCase().includes(langSearch.toLowerCase()) || 
+              l.nativeName.toLowerCase().includes(langSearch.toLowerCase())
+            ).length > 0) && (
               <div>
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-1">
-                  Indian Languages ({filteredIndian.length})
+                <h4 className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-2 px-1 flex items-center justify-between">
+                  <span>{t('settings.supportedLanguages')} (Full UI Translation)</span>
+                  <span className="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 font-semibold px-2 py-0.5 rounded-full">Available</span>
                 </h4>
-                <div className="space-y-1">
-                  {filteredIndian.map((l) => (
-                    <button
-                      key={l.code}
-                      type="button"
-                      onClick={() => handleSelectLanguage(l.code)}
-                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-colors ${
-                        currentLang === l.code 
-                          ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-semibold'
-                          : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-200'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-2">
-                        <span>{l.name}</span>
-                        <span className="text-xs text-gray-400 font-normal">({l.nativeName})</span>
-                      </div>
-                      {currentLang === l.code && <Check size={16} className="text-blue-600 dark:text-blue-400" />}
-                    </button>
-                  ))}
+                <div className="space-y-1.5">
+                  {[
+                    { code: 'en', name: 'English', nativeName: 'English' },
+                    { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' }
+                  ]
+                    .filter(l => 
+                      l.name.toLowerCase().includes(langSearch.toLowerCase()) || 
+                      l.nativeName.toLowerCase().includes(langSearch.toLowerCase())
+                    )
+                    .map((l) => (
+                      <button
+                        key={l.code}
+                        type="button"
+                        onClick={() => handleSelectLanguage(l.code)}
+                        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all border ${
+                          currentLang === l.code 
+                            ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 font-semibold shadow-xs'
+                            : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-800 dark:text-gray-200'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2.5">
+                          <span className="font-medium text-base">{l.nativeName}</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">({l.name})</span>
+                          <span className="text-[10px] bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 px-2 py-0.5 rounded font-medium border border-emerald-200 dark:border-emerald-800">
+                            Full Translation
+                          </span>
+                        </div>
+                        {currentLang === l.code && <Check size={18} className="text-blue-600 dark:text-blue-400" />}
+                      </button>
+                    ))}
                 </div>
               </div>
             )}
 
-            {/* International Languages */}
-            {filteredInternational.length > 0 && (
+            {/* 2. Indian Languages (Coming Soon) */}
+            {filteredIndian.filter(l => l.code !== 'en' && l.code !== 'hi').length > 0 && (
               <div>
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-1 pt-2 border-t border-gray-100 dark:border-gray-700">
-                  International Languages ({filteredInternational.length})
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-1 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                  <span>Other Indian Regional Languages</span>
+                  <span className="text-[10px] bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 font-normal px-2 py-0.5 rounded-full">Coming Soon</span>
                 </h4>
                 <div className="space-y-1">
-                  {filteredInternational.map((l) => (
-                    <button
-                      key={l.code}
-                      type="button"
-                      onClick={() => handleSelectLanguage(l.code)}
-                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-colors ${
-                        currentLang === l.code 
-                          ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-semibold'
-                          : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-200'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-2">
-                        <span>{l.name}</span>
-                        <span className="text-xs text-gray-400 font-normal">({l.nativeName})</span>
-                      </div>
-                      {currentLang === l.code && <Check size={16} className="text-blue-600 dark:text-blue-400" />}
-                    </button>
-                  ))}
+                  {filteredIndian
+                    .filter(l => l.code !== 'en' && l.code !== 'hi')
+                    .map((l) => (
+                      <button
+                        key={l.code}
+                        type="button"
+                        onClick={() => handleSelectLanguage(l.code)}
+                        className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-colors ${
+                          currentLang === l.code 
+                            ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-semibold'
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <span>{l.name}</span>
+                          <span className="text-xs text-gray-400 font-normal">({l.nativeName})</span>
+                        </div>
+                        <span className="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
+                          Coming Soon
+                        </span>
+                      </button>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* 3. International Languages (Coming Soon) */}
+            {filteredInternational.filter(l => l.code !== 'en' && l.code !== 'hi').length > 0 && (
+              <div>
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-1 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                  <span>International Languages</span>
+                  <span className="text-[10px] bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 font-normal px-2 py-0.5 rounded-full">Coming Soon</span>
+                </h4>
+                <div className="space-y-1">
+                  {filteredInternational
+                    .filter(l => l.code !== 'en' && l.code !== 'hi')
+                    .map((l) => (
+                      <button
+                        key={l.code}
+                        type="button"
+                        onClick={() => handleSelectLanguage(l.code)}
+                        className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-colors ${
+                          currentLang === l.code 
+                            ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-semibold'
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <span>{l.name}</span>
+                          <span className="text-xs text-gray-400 font-normal">({l.nativeName})</span>
+                        </div>
+                        <span className="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
+                          Coming Soon
+                        </span>
+                      </button>
+                    ))}
                 </div>
               </div>
             )}

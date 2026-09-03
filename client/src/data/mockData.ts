@@ -1,4 +1,4 @@
-import { Trip, Booking, Offer, EmergencyContact, FAQ, User, Guide } from '../types';
+import { Trip, Booking, Offer, EmergencyContact, FAQ, User, Guide, DestinationPlace } from '../types';
 
 export const mockTrips: Trip[] = [
   { _id: 't1', userId: 'u1', origin: 'Jaipur', destination: 'Ahmedabad', date: '2026-08-27', time: '10:00 AM', transportType: 'bus', provider: 'RSRTC', bookingId: 'b1', status: 'upcoming' },
@@ -209,3 +209,87 @@ export const internationalLanguages = [
 ];
 
 export const languages = [...indianLanguages, ...internationalLanguages];
+
+export const mockDestinations: DestinationPlace[] = [
+  {
+    id: 'jp-amber-fort',
+    name: 'Amber Fort',
+    location: 'Amer, Jaipur',
+    image: '/places/amber-fort.jpg',
+    description: 'Iconic hilltop fortress featuring artistic Rajput architecture, marble courtyards, the shimmering Sheesh Mahal, and panoramic Maota Lake vistas.',
+    highlights: ['Sheesh Mahal', 'Diwan-e-Aam', 'Maota Lake', 'Ganesh Pol']
+  },
+  {
+    id: 'jp-city-palace',
+    name: 'City Palace',
+    location: 'Old City, Jaipur',
+    image: '/places/city-palace.jpg',
+    description: 'Magnificent royal residence blending Rajasthani and Mughal architectural traditions, housing museums, royal regalia, and the ornate Peacock Gate.',
+    highlights: ['Chandra Mahal', 'Mubarak Mahal', 'Peacock Gate', 'Armoury Museum']
+  },
+  {
+    id: 'jp-hawa-mahal',
+    name: 'Hawa Mahal',
+    location: 'Badi Choupad, Pink City',
+    image: '/places/hawa-mahal.jpg',
+    description: 'Legendary five-storey pink sandstone palace with 953 intricate jharokhas built to let cool breeze circulate through royal quarters.',
+    highlights: ['953 Jharokhas', 'Honeycomb Facade', 'Pink City View', 'Heritage Architecture']
+  },
+  {
+    id: 'jp-jantar-mantar',
+    name: 'Jantar Mantar',
+    location: 'Near City Palace, Jaipur',
+    image: '/places/jantar-mantar.jpg',
+    description: 'UNESCO World Heritage astronomical observatory housing the world’s largest stone sundial and 19 monumental celestial observation instruments.',
+    highlights: ['Samrat Yantra', 'Astronomical Sundial', 'UNESCO Site', 'Celestial Instruments']
+  },
+  {
+    id: 'jp-jal-mahal',
+    name: 'Jal Mahal',
+    location: 'Amer Road, Man Sagar Lake',
+    image: '/places/jal-mahal.jpg',
+    description: 'Picturesque water palace standing gracefully in the middle of Man Sagar Lake, surrounded by the scenic peaks of the Aravalli hills.',
+    highlights: ['Man Sagar Lake', 'Submerged Architecture', 'Aravalli Backdrop', 'Evening Lights']
+  },
+  {
+    id: 'jp-nahargarh-fort',
+    name: 'Nahargarh Fort',
+    location: 'Aravalli Hills, Jaipur',
+    image: '/places/nahargarh-fort.jpg',
+    description: 'Historic hilltop fortress situated on the edge of the Aravalli range, celebrated for Madhavendra Bhawan and sweeping sunset views of Jaipur.',
+    highlights: ['Madhavendra Bhawan', 'Sunset Point', 'Panoramic City View', 'Ancient Stepwell']
+  },
+  {
+    id: 'jp-jaigarh-fort',
+    name: 'Jaigarh Fort',
+    location: 'Amer Hills, Jaipur',
+    image: '/places/jaigarh-fort.jpg',
+    description: 'Imposing military fort guarding Amer, home to Jaivana — the world’s largest cannon on wheels, underground water tanks, and war armouries.',
+    highlights: ['Jaivana Cannon', 'Military Armoury', 'Watchtowers', 'Amer Connection']
+  },
+  {
+    id: 'jp-albert-hall',
+    name: 'Albert Hall Museum',
+    location: 'Ram Niwas Garden, Jaipur',
+    image: '/places/albert-hall.jpg',
+    description: 'The oldest museum of Rajasthan, showcasing Indo-Saracenic grandeur, rare crystal artifacts, miniature art, weapons, and an Egyptian mummy.',
+    highlights: ['Indo-Saracenic Style', 'Egyptian Mummy', 'Miniature Paintings', 'Night Illumination']
+  },
+  {
+    id: 'jp-birla-mandir',
+    name: 'Birla Mandir',
+    location: 'JLN Marg, Tilak Nagar',
+    image: '/places/birla-mandir.jpg',
+    description: 'Peaceful Hindu temple sculpted from pure white Makrana marble, displaying exquisite carved panels depicting mythological and philosophical themes.',
+    highlights: ['White Marble', 'Moti Dungri Hill', 'Intricate Sculptures', 'Spiritual Garden']
+  },
+  {
+    id: 'jp-patrika-gate',
+    name: 'Patrika Gate',
+    location: 'Jawahar Circle, Malviya Nagar',
+    image: '/places/patrika-gate.jpg',
+    description: 'Vibrant monument at Jawahar Circle with hand-painted archways illustrating the architectural heritage, history, and royal legacy of Rajasthan.',
+    highlights: ['Hand-painted Murals', 'Colorful Archways', 'Jawahar Circle Garden', 'Photography Spot']
+  }
+];
+

@@ -1,11 +1,13 @@
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { Home, ClipboardList, Compass, HelpCircle, User, LogOut } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 
 export const MainLayout: React.FC = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleLogout = () => {
     logout();
@@ -13,11 +15,11 @@ export const MainLayout: React.FC = () => {
   };
 
   const navItems = [
-    { to: '/home', icon: <Home size={24} />, label: 'Home' },
-    { to: '/bookings', icon: <ClipboardList size={24} />, label: 'Trip Information' },
-    { to: '/offers', icon: <Compass size={24} />, label: 'Guides' },
-    { to: '/help', icon: <HelpCircle size={24} />, label: 'Help' },
-    { to: '/account', icon: <User size={24} />, label: 'Account' },
+    { to: '/home', icon: <Home size={24} />, label: t('nav.home') },
+    { to: '/bookings', icon: <ClipboardList size={24} />, label: t('nav.bookings') },
+    { to: '/offers', icon: <Compass size={24} />, label: t('nav.offers') },
+    { to: '/help', icon: <HelpCircle size={24} />, label: t('nav.help') },
+    { to: '/account', icon: <User size={24} />, label: t('nav.account') },
   ];
 
   return (
@@ -53,7 +55,7 @@ export const MainLayout: React.FC = () => {
             className="flex items-center space-x-4 w-full px-5 py-3 rounded-2xl text-primary-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all duration-300 group"
           >
             <LogOut strokeWidth={1.5} size={22} className="group-hover:rotate-12 transition-transform" />
-            <span className="text-sm tracking-wide">Logout</span>
+            <span className="text-sm tracking-wide">{t('nav.logout')}</span>
           </button>
         </div>
       </aside>

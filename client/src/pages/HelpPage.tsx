@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Phone, MessageSquare, Mail, AlertTriangle, Send, CheckCircle2, Bot, User as UserIcon } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import EmergencyCard from '../components/EmergencyCard';
@@ -16,6 +17,7 @@ interface ChatMessage {
 }
 
 export default function HelpPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const countryCode = user?.countryCode || 'IN';
   
@@ -126,7 +128,7 @@ export default function HelpPage() {
   return (
     <div className="pb-20 pt-6 px-4 max-w-lg mx-auto bg-gray-50 dark:bg-gray-900 min-h-screen space-y-8 font-sans">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">How can we help?</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">{t('help.title')}</h1>
 
         {/* SOS Success Banner */}
         {sosSuccess && (

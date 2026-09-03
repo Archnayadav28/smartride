@@ -1,63 +1,36 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
-  Compass, MapPin, Star, Clock, Languages, Award, 
-  Calendar, Users, Phone, CheckCircle2, Search, Filter, 
-  ChevronRight, Shield, X, Sparkles, BookOpen
+  Compass, MapPin, Calendar, Clock, Users, CheckCircle2, 
+  Search, X, Sparkles, Trash2, ArrowRight, Info
 } from 'lucide-react';
 import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
-import { mockGuides } from '../data/mockData';
-import { Guide, GuideBooking } from '../types';
-import { useAuth } from '../contexts/AuthContext';
-
-const CATEGORIES = [
-  'All',
-  'Local Sightseeing',
-  'Historical & Cultural',
-  'Adventure',
-  'Food & Local Experiences',
-  'Family Tours',
-  'Nature & Wildlife'
-];
-
-const LANGUAGES = [
-  'All',
-  'English',
-  'Hindi',
-  'French',
-  'German',
-  'Spanish',
-  'Gujarati'
-];
+import { mockDestinations } from '../data/mockData';
+import { DestinationPlace, GuideRequest } from '../types';
 
 export default function OffersPage() {
-  const { user } = useAuth();
+  const { t } = useTranslation();
+  // Navigation Tabs: 'explore' or 'myRequests'
+  const [activeTab, setActiveTab] = useState<'explore' | 'myRequests'>('explore');
 
-  // Search & Filter State
-  const [searchLocation, setSearchLocation] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedLanguage, setSelectedLanguage] = useState('All');
-  const [activeTab, setActiveTab] = useState<'explore' | 'myBookings'>('explore');
+  // Search filter for Jaipur places
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Modals state
-  const [viewingGuide, setViewingGuide] = useState<Guide | null>(null);
-  const [bookingGuide, setBookingGuide] = useState<Guide | null>(null);
+  const [selectedPlace, setSelectedPlace] = useState<DestinationPlace | null>(null);
+  const [bookingPlace, setBookingPlace] = useState<DestinationPlace | null>(null);
 
-  // Booking Form State
-  const [touristName, setTouristName] = useState(user?.name || '');
-  const [contactNumber, setContactNumber] = useState(user?.mobile || '');
-  const [destination, setDestination] = useState('');
-  const [tourDate, setTourDate] = useState('');
-  const [numberOfTourists, setNumberOfTourists] = useState<number>(1);
-  const [preferredLanguage, setPreferredLanguage] = useState('English');
-  const [specialRequirements, setSpecialRequirements] = useState('');
-  const [bookingErrors, setBookingErrors] = useState<Record<string, string>>({});
+  // Guide Booking Form State
+  const [guideDate, setGuideDate] = useState('');
+  const [guideTime, setGuideTime] = useState('10:00');
+  const [numberOfPeople, setNumberOfPeople] = useState<number>(2);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Guide Bookings storage
-  const [myBookings, setMyBookings] = useState<GuideBooking[]>(() => {
-    const saved = localStorage.getItem('smartride_guide_bookings');
+  // Saved Guide Requests in LocalStorage
+  const [savedRequests, setSavedRequests] = useState<GuideRequest[]>(() => {
+    const saved = localStorage.getItem('smartride_guide_requests');
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -65,659 +38,615 @@ export default function OffersPage() {
         // fallback
       }
     }
+    // Default demo request for demonstration
     return [
       {
-        id: 'GB-71829',
-        guideId: 'g1',
-        guideName: 'Rajveer Singh Rathore',
-        touristName: user?.name || 'Archna',
-        contactNumber: user?.mobile || '9876543210',
-        destination: 'Amer Fort & Nahargarh Sanctuary',
-        tourDate: '2026-09-08',
-        numberOfTourists: 2,
-        preferredLanguage: 'English',
-        specialRequirements: 'Interested in royal architecture and photo spots',
-        totalPrice: 1800,
-        status: 'Confirmed (Demo)',
-        bookedAt: '2026-09-02T11:00:00.000Z'
+        id: 'GR-10492',
+        destination: 'Amber Fort',
+        destinationLocation: 'Amer, Jaipur',
+        destinationImage: '/places/amber-fort.jpg',
+        date: '2026-09-12',
+        time: '10:00 AM',
+        numberOfPeople: 2,
+        createdAt: new Date().toISOString()
       }
     ];
   });
 
+  // Sync to localStorage
   useEffect(() => {
-    localStorage.setItem('smartride_guide_bookings', JSON.stringify(myBookings));
-  }, [myBookings]);
+    localStorage.setItem('smartride_guide_requests', JSON.stringify(savedRequests));
+  }, [savedRequests]);
 
-  // Open booking modal prefilling destination
-  const handleOpenBooking = (guide: Guide) => {
-    setViewingGuide(null);
-    setBookingGuide(guide);
-    setDestination(guide.location);
-    setPreferredLanguage(guide.languages[0] || 'English');
-    setTouristName(user?.name || '');
-    setContactNumber(user?.mobile || '');
-    setBookingErrors({});
+  // Today's date for datepicker min attribute
+  const todayDate = new Date().toISOString().split('T')[0];
+
+  // Filter Jaipur places by search query
+  const filteredPlaces = mockDestinations.filter(d => 
+    d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    d.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    d.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Open Place Details Modal
+  const handleCardClick = (place: DestinationPlace) => {
+    setSelectedPlace(place);
   };
 
-  // Validation
-  const validateBooking = () => {
-    const errs: Record<string, string> = {};
-    if (!touristName.trim()) errs.touristName = 'Tourist name is required';
-    if (!contactNumber.trim()) errs.contactNumber = 'Contact number is required';
-    else if (contactNumber.trim().length < 7) errs.contactNumber = 'Enter a valid phone number';
-    if (!destination.trim()) errs.destination = 'Destination is required';
-    if (!tourDate) errs.tourDate = 'Tour date is required';
-    if (!numberOfTourists || numberOfTourists < 1) errs.numberOfTourists = 'At least 1 tourist required';
-    setBookingErrors(errs);
-    return Object.keys(errs).length === 0;
+  // Open Book Guide Modal from details modal
+  const handleOpenBookGuide = (place: DestinationPlace) => {
+    setSelectedPlace(null);
+    setBookingPlace(place);
+    // Initialize form defaults
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    setGuideDate(tomorrow.toISOString().split('T')[0]);
+    setGuideTime('10:00');
+    setNumberOfPeople(2);
+    setFormErrors({});
   };
 
-  // Submit Booking
-  const handleConfirmBooking = (e: React.FormEvent) => {
+  // Validate and submit guide request
+  const handleConfirmRequest = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateBooking() || !bookingGuide) return;
+    if (!bookingPlace) return;
 
-    const newBooking: GuideBooking = {
-      id: `GB-${Math.floor(10000 + Math.random() * 90000)}`,
-      guideId: bookingGuide.id,
-      guideName: bookingGuide.name,
-      touristName: touristName.trim(),
-      contactNumber: contactNumber.trim(),
-      destination: destination.trim(),
-      tourDate,
-      numberOfTourists: Number(numberOfTourists),
-      preferredLanguage,
-      specialRequirements: specialRequirements.trim(),
-      totalPrice: bookingGuide.pricePerDay,
-      status: 'Confirmed (Demo)',
-      bookedAt: new Date().toISOString()
+    const errors: Record<string, string> = {};
+
+    if (!guideDate) {
+      errors.guideDate = 'Please select a date for your guide.';
+    } else if (guideDate < todayDate) {
+      errors.guideDate = 'Please choose today or a future date.';
+    }
+
+    if (!guideTime) {
+      errors.guideTime = 'Please select a time.';
+    }
+
+    if (!numberOfPeople || numberOfPeople < 1) {
+      errors.numberOfPeople = 'Number of people must be at least 1.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    // Format display time
+    let formattedTime = guideTime;
+    const [hStr, mStr] = guideTime.split(':');
+    if (hStr && mStr) {
+      const h = parseInt(hStr, 10);
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const displayH = h % 12 || 12;
+      formattedTime = `${displayH}:${mStr} ${ampm}`;
+    }
+
+    // Create new Guide Request
+    const newRequest: GuideRequest = {
+      id: `GR-${Math.floor(10000 + Math.random() * 90000)}`,
+      destination: bookingPlace.name,
+      destinationLocation: bookingPlace.location,
+      destinationImage: bookingPlace.image,
+      date: guideDate,
+      time: formattedTime,
+      numberOfPeople: Number(numberOfPeople),
+      createdAt: new Date().toISOString()
     };
 
-    setMyBookings(prev => [newBooking, ...prev]);
-    setSuccessMessage(`Guide booking confirmed successfully for ${bookingGuide.name}! Booking Ref: ${newBooking.id}`);
-    setBookingGuide(null);
-    setSpecialRequirements('');
-
-    // Switch to my bookings tab to show the record
-    setActiveTab('myBookings');
+    setSavedRequests(prev => [newRequest, ...prev]);
+    setBookingPlace(null);
+    setSuccessMessage('Guide request saved successfully!');
+    setActiveTab('myRequests');
 
     setTimeout(() => {
       setSuccessMessage('');
     }, 5000);
   };
 
-  // Filtered guides list
-  const filteredGuides = mockGuides.filter((g) => {
-    const matchesSearch = 
-      !searchLocation.trim() ||
-      g.location.toLowerCase().includes(searchLocation.toLowerCase()) ||
-      g.name.toLowerCase().includes(searchLocation.toLowerCase()) ||
-      g.category.toLowerCase().includes(searchLocation.toLowerCase());
-
-    const matchesCategory = 
-      selectedCategory === 'All' || g.category === selectedCategory;
-
-    const matchesLanguage = 
-      selectedLanguage === 'All' || g.languages.includes(selectedLanguage);
-
-    return matchesSearch && matchesCategory && matchesLanguage;
-  });
+  // Delete / cancel saved request
+  const handleDeleteRequest = (id: string) => {
+    setSavedRequests(prev => prev.filter(r => r.id !== id));
+  };
 
   return (
-    <div className="pb-24 pt-6 px-4 max-w-5xl mx-auto bg-gray-50 dark:bg-gray-900 min-h-screen font-sans">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div className="pb-24 pt-6 px-4 max-w-7xl mx-auto min-h-screen font-sans space-y-6">
+      {/* 1. Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
-            <Compass className="mr-2 text-blue-600 dark:text-blue-400" size={26} />
-            Find a Guide
+          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-semibold mb-2">
+            <Compass size={14} />
+            <span>Jaipur Tourist Guide Service</span>
+          </div>
+          <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+            {t('offers.title')}
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Explore your destination with a local guide.
+            {t('offers.subtitle')}
           </p>
         </div>
 
-        {/* Tab Toggle: Explore vs My Booked Guides */}
-        <div className="flex bg-white dark:bg-gray-800 p-1 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 self-start sm:self-auto">
+        {/* Tab Switcher */}
+        <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl border border-gray-200/80 dark:border-gray-700 self-start md:self-auto">
           <button
+            type="button"
             onClick={() => setActiveTab('explore')}
-            className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
               activeTab === 'explore'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900'
+                ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'
             }`}
           >
-            Available Guides ({mockGuides.length})
+            Explore Jaipur Places ({mockDestinations.length})
           </button>
           <button
-            onClick={() => setActiveTab('myBookings')}
-            className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors flex items-center space-x-1.5 ${
-              activeTab === 'myBookings'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900'
+            type="button"
+            onClick={() => setActiveTab('myRequests')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
+              activeTab === 'myRequests'
+                ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'
             }`}
           >
-            <span>My Booked Guides</span>
-            <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 py-0.2 rounded-full text-[10px]">
-              {myBookings.length}
-            </span>
+            <span>My Guide Requests</span>
+            {savedRequests.length > 0 && (
+              <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+                {savedRequests.length}
+              </span>
+            )}
           </button>
         </div>
       </div>
 
-      {/* Success Notification Banner */}
+      {/* Success Banner */}
       {successMessage && (
-        <div className="mb-6 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 px-4 py-3.5 rounded-2xl flex items-center justify-between text-sm shadow-sm animate-fade-in">
-          <div className="flex items-center space-x-2.5">
-            <CheckCircle2 size={20} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+        <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-300 px-4 py-3.5 rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
+          <div className="flex items-center space-x-3 text-sm">
+            <CheckCircle2 size={20} className="text-green-600 dark:text-green-400 flex-shrink-0" />
             <span className="font-semibold">{successMessage}</span>
           </div>
-          <button onClick={() => setSuccessMessage('')} className="text-emerald-700 hover:opacity-75">
+          <button onClick={() => setSuccessMessage('')} className="text-green-600 hover:opacity-75">
             <X size={16} />
           </button>
         </div>
       )}
 
-      {/* VIEW: AVAILABLE GUIDES */}
+      {/* ========================================================= */}
+      {/* TAB 1: EXPLORE JAIPUR PLACES                              */}
+      {/* ========================================================= */}
       {activeTab === 'explore' && (
-        <div className="space-y-6">
-          {/* Search & Filter Bar */}
-          <div className="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {/* Destination / Location Search */}
-              <div className="relative">
-                <Search size={18} className="absolute left-3.5 top-3.5 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchLocation}
-                  onChange={(e) => setSearchLocation(e.target.value)}
-                  placeholder="Search destination or guide..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                />
-              </div>
-
-              {/* Language Filter */}
-              <div>
-                <select
-                  value={selectedLanguage}
-                  onChange={(e) => setSelectedLanguage(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                >
-                  <option value="All">All Languages</option>
-                  {LANGUAGES.filter(l => l !== 'All').map(lang => (
-                    <option key={lang} value={lang}>{lang}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Guide Category Dropdown */}
-              <div>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none font-medium"
-                >
-                  {CATEGORIES.map(cat => (
-                    <option key={cat} value={cat}>Category: {cat}</option>
-                  ))}
-                </select>
-              </div>
+        <div className="space-y-6 animate-fade-in">
+          {/* Search bar */}
+          <div className="relative max-w-md">
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+              <Search size={18} />
             </div>
-
-            {/* Category Quick Pills */}
-            <div className="flex items-center space-x-2 overflow-x-auto pb-1 text-xs no-scrollbar">
-              <span className="text-gray-400 font-semibold uppercase text-[11px] flex items-center pr-1 flex-shrink-0">
-                <Filter size={12} className="mr-1" /> Category:
-              </span>
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1.5 rounded-full font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-                    selectedCategory === cat
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search Jaipur places, forts, palaces..."
+              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-2xl border border-gray-200 dark:border-gray-700 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                <X size={16} />
+              </button>
+            )}
           </div>
 
-          {/* Guide Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredGuides.map((guide) => (
+          {/* Jaipur Places Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {filteredPlaces.map((place) => (
               <div
-                key={guide.id}
-                className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all flex flex-col justify-between"
+                key={place.id}
+                onClick={() => handleCardClick(place)}
+                className="group bg-white dark:bg-gray-800 rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col"
               >
-                <div>
-                  {/* Top: Avatar, Name, Rating */}
-                  <div className="flex items-start space-x-3.5 mb-3">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center text-xl font-bold flex-shrink-0 shadow-inner">
-                      {guide.avatarInitial}
+                {/* Place Photo */}
+                <div className="relative h-48 w-full overflow-hidden bg-gray-100 dark:bg-gray-700">
+                  <img
+                    src={place.image}
+                    alt={place.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                  
+                  {/* Place name on photo */}
+                  <div className="absolute bottom-3 left-3 right-3 text-white">
+                    <h3 className="text-xl font-extrabold drop-shadow-sm leading-tight">
+                      {place.name}
+                    </h3>
+                    <div className="flex items-center text-xs text-gray-200 drop-shadow-sm mt-0.5">
+                      <MapPin size={12} className="mr-1 flex-shrink-0 text-blue-300" />
+                      <span className="truncate">{place.location}</span>
                     </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-bold text-gray-900 dark:text-white text-base truncate">
-                          {guide.name}
-                        </h3>
-                      </div>
-
-                      <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold flex items-center mt-0.5">
-                        <MapPin size={12} className="mr-1 flex-shrink-0" />
-                        <span className="truncate">{guide.location}</span>
-                      </p>
-
-                      <div className="flex items-center space-x-2 mt-1">
-                        <span className="flex items-center text-xs font-bold text-amber-500 bg-amber-50 dark:bg-amber-900/30 px-1.5 py-0.5 rounded">
-                          <Star size={12} className="fill-amber-400 mr-1" />
-                          {guide.rating}
-                        </span>
-                        <span className="text-[11px] text-gray-400">({guide.reviewsCount} reviews)</span>
-                        <span className="text-[11px] text-gray-400">• {guide.experienceYears} yrs exp</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Specialization Badge */}
-                  <div className="flex flex-wrap gap-1.5 mb-2.5">
-                    <span className="px-2.5 py-0.5 text-[11px] font-semibold rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-                      {guide.category}
-                    </span>
-                    {guide.badge && (
-                      <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 flex items-center">
-                        <Shield size={10} className="mr-1" /> {guide.badge}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Short Description */}
-                  <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 mb-3">
-                    {guide.shortDescription}
-                  </p>
-
-                  {/* Spoken Languages */}
-                  <div className="flex items-center space-x-1.5 text-xs text-gray-500 dark:text-gray-400 mb-4">
-                    <Languages size={13} className="text-gray-400 flex-shrink-0" />
-                    <span className="truncate">{guide.languages.join(', ')}</span>
                   </div>
                 </div>
 
-                {/* Bottom Card Footer: Price & Actions */}
-                <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <span className="text-xs text-gray-400 block">Fee</span>
-                      <span className="text-base font-extrabold text-gray-900 dark:text-white">
-                        ₹{guide.pricePerDay.toLocaleString()}
-                        <span className="text-xs font-normal text-gray-400"> / day</span>
-                      </span>
-                    </div>
+                {/* Card Content */}
+                <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                  <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
+                    {place.description}
+                  </p>
 
-                    <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-full">
-                      {guide.availability}
+                  <div className="pt-2 border-t border-gray-100 dark:border-gray-700/60 flex items-center justify-between">
+                    <span className="text-xs font-bold text-blue-600 dark:text-blue-400 group-hover:underline flex items-center">
+                      View Details & Guide <ArrowRight size={13} className="ml-1 group-hover:translate-x-0.5 transition-transform" />
                     </span>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => setViewingGuide(guide)}
-                      className="w-full py-2 px-3 text-xs font-semibold rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-                    >
-                      View Profile
-                    </button>
-                    <button
-                      onClick={() => handleOpenBooking(guide)}
-                      className="w-full py-2 px-3 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition"
-                    >
-                      Book Guide
-                    </button>
+                    <span className="text-[10px] font-semibold text-gray-400 bg-gray-50 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                      Guide Available
+                    </span>
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          {filteredGuides.length === 0 && (
-            <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700">
-              <Compass className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3 animate-pulse" />
-              <h3 className="font-bold text-gray-800 dark:text-gray-200 text-base">No guides found</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">
-                No guides match your current filter criteria. Try resetting the category or searching for another location.
-              </p>
+          {filteredPlaces.length === 0 && (
+            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 p-6">
+              <Compass size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+              <h3 className="font-bold text-gray-800 dark:text-gray-200">No Jaipur places found</h3>
+              <p className="text-xs text-gray-500 mt-1">Try a different monument or landmark keyword.</p>
               <button
-                onClick={() => {
-                  setSelectedCategory('All');
-                  setSelectedLanguage('All');
-                  setSearchLocation('');
-                }}
-                className="mt-4 px-4 py-2 text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 rounded-xl hover:bg-blue-100"
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="mt-3 text-xs text-blue-600 font-semibold hover:underline"
               >
-                Reset Filters
+                Clear search
               </button>
             </div>
           )}
         </div>
       )}
 
-      {/* VIEW: MY BOOKED GUIDES */}
-      {activeTab === 'myBookings' && (
-        <div className="space-y-4 max-w-2xl mx-auto">
-          <div className="flex items-center justify-between mb-2">
+      {/* ========================================================= */}
+      {/* TAB 2: MY GUIDE REQUESTS                                  */}
+      {/* ========================================================= */}
+      {activeTab === 'myRequests' && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Your Booked Guides</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Official guide bookings registered for your travel safety and support
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                My Guide Requests
+              </h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Saved tourist guide requests recorded for your Jaipur visit
               </p>
             </div>
             <button
+              type="button"
               onClick={() => setActiveTab('explore')}
-              className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline"
+              className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1"
             >
-              + Book Another Guide
+              <span>+ Book Another Jaipur Place</span>
             </button>
           </div>
 
-          {myBookings.map((b) => (
-            <div
-              key={b.id}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 space-y-3"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-md">
-                      {b.id}
-                    </span>
-                    <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full flex items-center">
-                      <Shield size={12} className="mr-1" /> {b.status}
-                    </span>
+          {savedRequests.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {savedRequests.map((req) => (
+                <div
+                  key={req.id}
+                  className="bg-white dark:bg-gray-800 rounded-3xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition"
+                >
+                  <div>
+                    {/* Header: Place Name & ID */}
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        {req.destinationImage && (
+                          <img
+                            src={req.destinationImage}
+                            alt={req.destination}
+                            className="w-12 h-12 rounded-2xl object-cover border border-gray-200 dark:border-gray-700 flex-shrink-0"
+                          />
+                        )}
+                        <div>
+                          <h3 className="font-extrabold text-base text-gray-900 dark:text-white leading-snug">
+                            {req.destination}
+                          </h3>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-0.5">
+                            <MapPin size={11} className="mr-1 text-blue-500 flex-shrink-0" />
+                            <span className="truncate">{req.destinationLocation}</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/40 px-2 py-0.5 rounded-md">
+                        {req.id}
+                      </span>
+                    </div>
+
+                    {/* Request Details */}
+                    <div className="bg-gray-50 dark:bg-gray-750/60 p-3 rounded-2xl space-y-2 text-xs">
+                      <div className="flex items-center justify-between text-gray-700 dark:text-gray-300">
+                        <span className="text-gray-400 flex items-center">
+                          <Calendar size={13} className="mr-1.5 text-blue-500" /> Date
+                        </span>
+                        <span className="font-bold">{req.date}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-gray-700 dark:text-gray-300">
+                        <span className="text-gray-400 flex items-center">
+                          <Clock size={13} className="mr-1.5 text-blue-500" /> Time
+                        </span>
+                        <span className="font-bold">{req.time}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-gray-700 dark:text-gray-300">
+                        <span className="text-gray-400 flex items-center">
+                          <Users size={13} className="mr-1.5 text-blue-500" /> Number of People
+                        </span>
+                        <span className="font-bold">{req.numberOfPeople} {req.numberOfPeople === 1 ? 'Person' : 'People'}</span>
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="font-bold text-gray-900 dark:text-white text-base mt-2">
-                    Guide: {b.guideName}
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-0.5">
-                    <MapPin size={12} className="mr-1 text-blue-500" />
-                    {b.destination}
-                  </p>
-                </div>
 
-                <div className="text-right">
-                  <span className="text-xs text-gray-400 block">Total Fee</span>
-                  <span className="text-base font-extrabold text-gray-900 dark:text-white">
-                    ₹{b.totalPrice.toLocaleString()}
-                  </span>
+                  {/* Footer Action */}
+                  <div className="pt-2 border-t border-gray-100 dark:border-gray-700/60 flex items-center justify-between">
+                    <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center">
+                      <CheckCircle2 size={13} className="mr-1" /> Request Saved
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteRequest(req.id)}
+                      className="text-xs text-red-500 hover:text-red-700 dark:hover:text-red-400 p-1 rounded-lg transition flex items-center space-x-1"
+                      title="Cancel Request"
+                    >
+                      <Trash2 size={13} />
+                      <span>Remove</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-xs bg-gray-50 dark:bg-gray-700/30 p-3 rounded-xl text-gray-600 dark:text-gray-300">
-                <div>
-                  <span className="text-gray-400 block text-[11px]">Tour Date</span>
-                  <span className="font-semibold text-gray-800 dark:text-gray-200">{b.tourDate}</span>
-                </div>
-                <div>
-                  <span className="text-gray-400 block text-[11px]">Group Size</span>
-                  <span className="font-semibold text-gray-800 dark:text-gray-200">{b.numberOfTourists} Tourist(s)</span>
-                </div>
-                <div className="mt-1">
-                  <span className="text-gray-400 block text-[11px]">Tourist Contact</span>
-                  <span className="font-semibold text-gray-800 dark:text-gray-200">{b.contactNumber}</span>
-                </div>
-                <div className="mt-1">
-                  <span className="text-gray-400 block text-[11px]">Language</span>
-                  <span className="font-semibold text-gray-800 dark:text-gray-200">{b.preferredLanguage}</span>
-                </div>
-              </div>
-
-              {b.specialRequirements && (
-                <div className="text-xs text-gray-500 dark:text-gray-400 bg-blue-50/50 dark:bg-blue-900/10 p-2.5 rounded-xl border border-blue-100 dark:border-blue-900/30">
-                  <span className="font-semibold text-blue-800 dark:text-blue-300 block mb-0.5">Special Requests:</span>
-                  {b.specialRequirements}
-                </div>
-              )}
+              ))}
             </div>
-          ))}
-
-          {myBookings.length === 0 && (
-            <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-3xl">
-              <Compass className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-              <p className="text-gray-500 font-medium">No guide bookings yet</p>
-              <button
+          ) : (
+            <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 p-6">
+              <Compass size={44} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+              <h3 className="font-bold text-gray-800 dark:text-gray-200 text-base">No saved guide requests yet</h3>
+              <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
+                Select any Jaipur tourist place from the catalog and request a guide for your visit.
+              </p>
+              <Button
                 onClick={() => setActiveTab('explore')}
-                className="mt-3 px-4 py-2 text-xs font-bold text-white bg-blue-600 rounded-xl"
+                className="mt-4 text-xs font-bold py-2.5 px-5"
               >
-                Browse Guides
-              </button>
+                Explore Jaipur Places
+              </Button>
             </div>
           )}
         </div>
       )}
 
-      {/* MODAL 1: VIEW PROFILE */}
-      {viewingGuide && (
+      {/* ========================================================= */}
+      {/* 2. JAIPUR PLACE DETAILS MODAL                             */}
+      {/* ========================================================= */}
+      {selectedPlace && (
         <Modal
-          isOpen={!!viewingGuide}
-          onClose={() => setViewingGuide(null)}
-          title="Guide Profile"
-          size="md"
+          isOpen={!!selectedPlace}
+          onClose={() => setSelectedPlace(null)}
+          title={selectedPlace.name}
         >
-          <div className="space-y-4 pt-1">
-            {/* Guide Header */}
-            <div className="flex items-center space-x-3 pb-3 border-b border-gray-100 dark:border-gray-700">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center text-2xl font-bold flex-shrink-0 shadow-md">
-                {viewingGuide.avatarInitial}
-              </div>
-
-              <div>
-                <div className="flex items-center space-x-2">
-                  <h3 className="font-bold text-lg text-gray-900 dark:text-white">
-                    {viewingGuide.name}
-                  </h3>
-                  {viewingGuide.badge && (
-                    <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200 px-2 py-0.5 rounded-full">
-                      {viewingGuide.badge}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold flex items-center mt-0.5">
-                  <MapPin size={13} className="mr-1" />
-                  {viewingGuide.location}
-                </p>
-                <div className="flex items-center space-x-2 mt-1">
-                  <span className="flex items-center text-xs font-bold text-amber-500">
-                    <Star size={13} className="fill-amber-400 mr-1" />
-                    {viewingGuide.rating} ({viewingGuide.reviewsCount} reviews)
-                  </span>
-                  <span className="text-xs text-gray-400">• {viewingGuide.experienceYears} Years Exp</span>
+          <div className="space-y-4">
+            {/* Large Place Photo */}
+            <div className="relative h-64 w-full rounded-2xl overflow-hidden shadow-inner">
+              <img
+                src={selectedPlace.image}
+                alt={selectedPlace.name}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+              
+              <div className="absolute bottom-4 left-4 right-4 text-white">
+                <span className="text-xs font-semibold px-2 py-0.5 bg-blue-600 text-white rounded-md mb-1 inline-block">
+                  Jaipur Landmark
+                </span>
+                <h2 className="text-2xl font-black">{selectedPlace.name}</h2>
+                <div className="flex items-center text-xs text-gray-200 mt-0.5">
+                  <MapPin size={13} className="mr-1 text-blue-300" />
+                  <span>{selectedPlace.location}</span>
                 </div>
               </div>
             </div>
 
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="p-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl">
-                <span className="text-gray-400 block text-[11px]">Specialization</span>
-                <span className="font-bold text-gray-900 dark:text-white">{viewingGuide.category}</span>
-              </div>
-              <div className="p-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl">
-                <span className="text-gray-400 block text-[11px]">Availability</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">{viewingGuide.availability}</span>
-              </div>
-              <div className="p-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl col-span-2">
-                <span className="text-gray-400 block text-[11px]">Languages Spoken</span>
-                <span className="font-bold text-gray-900 dark:text-white">{viewingGuide.languages.join(', ')}</span>
-              </div>
-            </div>
-
-            {/* About the Guide */}
+            {/* Place Description */}
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1.5">
-                About the Guide
+              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+                About this Place
               </h4>
-              <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-300 bg-blue-50/40 dark:bg-blue-900/10 p-3.5 rounded-2xl border border-blue-100 dark:border-blue-900/30">
-                {viewingGuide.about}
+              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                {selectedPlace.description}
               </p>
             </div>
 
-            {/* Price & Book Button */}
-            <div className="pt-2 flex items-center justify-between border-t border-gray-100 dark:border-gray-700">
+            {/* Highlights */}
+            {selectedPlace.highlights && selectedPlace.highlights.length > 0 && (
               <div>
-                <span className="text-xs text-gray-400 block">Standard Rate</span>
-                <span className="text-lg font-extrabold text-gray-900 dark:text-white">
-                  ₹{viewingGuide.pricePerDay.toLocaleString()}
-                  <span className="text-xs font-normal text-gray-400"> / day</span>
-                </span>
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center">
+                  <Sparkles size={12} className="mr-1 text-amber-500" /> Key Highlights
+                </h4>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedPlace.highlights.map((h, i) => (
+                    <span
+                      key={i}
+                      className="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-xl text-xs font-medium"
+                    >
+                      {h}
+                    </span>
+                  ))}
+                </div>
               </div>
+            )}
 
-              <button
-                onClick={() => handleOpenBooking(viewingGuide)}
-                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition"
+            {/* Informational callout */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/40 p-3 rounded-2xl flex items-start space-x-2.5 text-xs text-blue-900 dark:text-blue-200">
+              <Info size={16} className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+              <span>
+                A verified local guide will accompany your tour of {selectedPlace.name}, explain historical architecture, and assist with tourist safety.
+              </span>
+            </div>
+
+            {/* Book a Guide Button */}
+            <div className="pt-2">
+              <Button
+                type="button"
+                onClick={() => handleOpenBookGuide(selectedPlace)}
+                className="w-full py-3.5 font-bold shadow-md flex items-center justify-center space-x-2 text-sm"
               >
-                Book This Guide
-              </button>
+                <Compass size={16} />
+                <span>Book a Guide</span>
+              </Button>
             </div>
           </div>
         </Modal>
       )}
 
-      {/* MODAL 2: BOOK GUIDE FORM */}
-      {bookingGuide && (
+      {/* ========================================================= */}
+      {/* 3. BOOK A GUIDE MODAL FORM                                */}
+      {/* ========================================================= */}
+      {bookingPlace && (
         <Modal
-          isOpen={!!bookingGuide}
-          onClose={() => setBookingGuide(null)}
-          title={`Book Guide: ${bookingGuide.name}`}
-          size="md"
+          isOpen={!!bookingPlace}
+          onClose={() => setBookingPlace(null)}
+          title="Book a Guide"
         >
-          <form onSubmit={handleConfirmBooking} className="space-y-4 pt-1">
-            {/* Guide Mini Summary */}
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 text-xs">
-              <div>
-                <span className="font-bold text-blue-900 dark:text-blue-200 block">{bookingGuide.name}</span>
-                <span className="text-blue-700 dark:text-blue-300">{bookingGuide.category}</span>
+          <form onSubmit={handleConfirmRequest} className="space-y-4">
+            {/* A. Destination: Automatically filled with selected Jaipur place */}
+            <div className="bg-blue-50/80 dark:bg-blue-900/20 p-3.5 rounded-2xl border border-blue-100 dark:border-blue-900/40 flex items-center space-x-3">
+              <img
+                src={bookingPlace.image}
+                alt={bookingPlace.name}
+                className="w-14 h-14 rounded-xl object-cover border border-white dark:border-gray-700 flex-shrink-0 shadow-xs"
+              />
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-blue-600 dark:text-blue-400 block">
+                  Destination (Jaipur Place)
+                </span>
+                <h3 className="font-extrabold text-base text-gray-900 dark:text-white truncate">
+                  {bookingPlace.name}
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center truncate">
+                  <MapPin size={11} className="mr-1 text-blue-500" />
+                  {bookingPlace.location}
+                </p>
               </div>
-              <div className="text-right">
-                <span className="font-extrabold text-blue-900 dark:text-blue-200 block">₹{bookingGuide.pricePerDay} / day</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{bookingGuide.availability}</span>
-              </div>
             </div>
 
-            {/* Tourist Name */}
+            {/* B. Date: "When do you need a guide?" */}
             <div>
-              <Input
-                label="Tourist Name *"
-                type="text"
-                placeholder="Enter your full name"
-                value={touristName}
-                onChange={(e) => {
-                  setTouristName(e.target.value);
-                  if (bookingErrors.touristName) setBookingErrors(prev => ({ ...prev, touristName: '' }));
-                }}
-                error={bookingErrors.touristName}
-              />
-            </div>
-
-            {/* Contact Number */}
-            <div>
-              <Input
-                label="Contact Number *"
-                type="tel"
-                placeholder="Mobile number for guide coordination"
-                value={contactNumber}
-                onChange={(e) => {
-                  setContactNumber(e.target.value);
-                  if (bookingErrors.contactNumber) setBookingErrors(prev => ({ ...prev, contactNumber: '' }));
-                }}
-                error={bookingErrors.contactNumber}
-                icon={<Phone size={16} />}
-              />
-            </div>
-
-            {/* Destination */}
-            <div>
-              <Input
-                label="Destination / Meeting Location *"
-                type="text"
-                placeholder="e.g. Amber Fort main gate, City Palace courtyard"
-                value={destination}
-                onChange={(e) => {
-                  setDestination(e.target.value);
-                  if (bookingErrors.destination) setBookingErrors(prev => ({ ...prev, destination: '' }));
-                }}
-                error={bookingErrors.destination}
-                icon={<MapPin size={16} />}
-              />
-            </div>
-
-            {/* Tour Date & Number of Tourists */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Input
-                  label="Tour / Guide Date *"
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                When do you need a guide? *
+              </label>
+              <div className="relative">
+                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                  <Calendar size={16} />
+                </div>
+                <input
                   type="date"
-                  value={tourDate}
+                  min={todayDate}
+                  value={guideDate}
                   onChange={(e) => {
-                    setTourDate(e.target.value);
-                    if (bookingErrors.tourDate) setBookingErrors(prev => ({ ...prev, tourDate: '' }));
+                    setGuideDate(e.target.value);
+                    if (formErrors.guideDate) setFormErrors({ ...formErrors, guideDate: '' });
                   }}
-                  error={bookingErrors.tourDate}
-                  icon={<Calendar size={16} />}
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${
+                    formErrors.guideDate ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  } bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none`}
                 />
               </div>
+              {formErrors.guideDate && (
+                <p className="text-xs text-red-500 mt-1">{formErrors.guideDate}</p>
+              )}
+            </div>
 
-              <div>
-                <Input
-                  label="Number of Tourists *"
+            {/* C. Time: "What time do you need the guide?" */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                What time do you need the guide? *
+              </label>
+              <div className="relative">
+                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                  <Clock size={16} />
+                </div>
+                <input
+                  type="time"
+                  value={guideTime}
+                  onChange={(e) => {
+                    setGuideTime(e.target.value);
+                    if (formErrors.guideTime) setFormErrors({ ...formErrors, guideTime: '' });
+                  }}
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${
+                    formErrors.guideTime ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  } bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none`}
+                />
+              </div>
+              {formErrors.guideTime && (
+                <p className="text-xs text-red-500 mt-1">{formErrors.guideTime}</p>
+              )}
+            </div>
+
+            {/* D. Number of People: "How many people are travelling?" */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                How many people are travelling? *
+              </label>
+              <div className="relative">
+                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                  <Users size={16} />
+                </div>
+                <input
                   type="number"
                   min="1"
-                  value={numberOfTourists.toString()}
+                  max="100"
+                  value={numberOfPeople}
                   onChange={(e) => {
-                    setNumberOfTourists(e.target.value ? Number(e.target.value) : 1);
-                    if (bookingErrors.numberOfTourists) setBookingErrors(prev => ({ ...prev, numberOfTourists: '' }));
+                    setNumberOfPeople(Math.max(1, parseInt(e.target.value, 10) || 1));
+                    if (formErrors.numberOfPeople) setFormErrors({ ...formErrors, numberOfPeople: '' });
                   }}
-                  error={bookingErrors.numberOfTourists}
-                  icon={<Users size={16} />}
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${
+                    formErrors.numberOfPeople ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  } bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none`}
                 />
+              </div>
+              {formErrors.numberOfPeople && (
+                <p className="text-xs text-red-500 mt-1">{formErrors.numberOfPeople}</p>
+              )}
+            </div>
+
+            {/* 4. Summary Before Confirmation */}
+            <div className="bg-gray-50 dark:bg-gray-750 p-3.5 rounded-2xl border border-gray-200/80 dark:border-gray-700 space-y-2 text-xs">
+              <span className="font-bold text-gray-500 uppercase tracking-wider block text-[10px]">
+                Request Summary
+              </span>
+              <div className="grid grid-cols-2 gap-2 text-gray-700 dark:text-gray-300">
+                <div>
+                  <span className="text-gray-400 block text-[10px]">Place:</span>
+                  <span className="font-bold text-gray-900 dark:text-white">{bookingPlace.name}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block text-[10px]">Date:</span>
+                  <span className="font-bold text-gray-900 dark:text-white">{guideDate || 'Not selected'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block text-[10px]">Time:</span>
+                  <span className="font-bold text-gray-900 dark:text-white">{guideTime || 'Not selected'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block text-[10px]">Number of People:</span>
+                  <span className="font-bold text-gray-900 dark:text-white">{numberOfPeople} {numberOfPeople === 1 ? 'Person' : 'People'}</span>
+                </div>
               </div>
             </div>
 
-            {/* Preferred Language */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Preferred Language *
-              </label>
-              <select
-                value={preferredLanguage}
-                onChange={(e) => setPreferredLanguage(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-              >
-                {bookingGuide.languages.map(lang => (
-                  <option key={lang} value={lang}>{lang}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Special Requirements */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Special Requirements <span className="text-gray-400 font-normal">(optional)</span>
-              </label>
-              <textarea
-                rows={2}
-                value={specialRequirements}
-                onChange={(e) => setSpecialRequirements(e.target.value)}
-                placeholder="e.g. Photography focus, dietary constraints, slow pace for seniors"
-                className="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-            </div>
-
-            {/* Submit Button */}
+            {/* Confirm Guide Request Button */}
             <div className="pt-2">
-              <Button type="submit" className="w-full py-3.5 font-bold shadow-md">
-                Confirm Guide Booking
+              <Button type="submit" className="w-full py-3.5 font-bold shadow-md text-sm">
+                Confirm Guide Request
               </Button>
             </div>
           </form>
@@ -726,4 +655,3 @@ export default function OffersPage() {
     </div>
   );
 }
-

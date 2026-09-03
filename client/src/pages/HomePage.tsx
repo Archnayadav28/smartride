@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Shield, PhoneCall, Lightbulb } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import GreetingCard from '../components/GreetingCard';
 import ProfileCompletion from '../components/ProfileCompletion';
 import MapCard from '../components/MapCard';
-import TripCard from '../components/TripCard';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
-import { mockTrips } from '../data/mockData';
 import { offlineStorage } from '../services/offlineStorage';
 import { calculateProfileCompletion } from '../utils/profileCompletion';
 
 export default function HomePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   
   const [showMapModal, setShowMapModal] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -28,7 +28,7 @@ export default function HomePage() {
     setProgress(0);
     
     const interval = setInterval(() => {
-      setProgress(prev => {
+      setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
           setDownloading(false);
@@ -54,7 +54,7 @@ export default function HomePage() {
       <section className="mt-12 animate-stagger-2">
         <div className="bg-white dark:bg-gray-800 rounded-[2rem] shadow p-6 overflow-hidden relative group transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary-50 dark:bg-primary-900/20 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
-          <h2 className="text-2xl font-bold text-primary-950 dark:text-white mb-4 relative z-10">Your Journey</h2>
+          <h2 className="text-2xl font-bold text-primary-950 dark:text-white mb-4 relative z-10">{t('home.yourJourney')}</h2>
           
           <div className="relative z-10 rounded-2xl overflow-hidden shadow-sm">
             <MapCard />
@@ -62,8 +62,8 @@ export default function HomePage() {
           
           <div className="mt-6 flex items-end justify-between relative z-10">
             <div>
-              <p className="text-lg font-medium text-primary-900 dark:text-primary-100 tracking-tight">Jaipur Region</p>
-              <p className="text-sm text-primary-500 dark:text-primary-400 mt-1">Offline map recommended</p>
+              <p className="text-lg font-medium text-primary-900 dark:text-primary-100 tracking-tight">{t('home.jaipurRegion')}</p>
+              <p className="text-sm text-primary-500 dark:text-primary-400 mt-1">{t('home.offlineMapRecommended')}</p>
             </div>
             <button 
               onClick={() => setShowMapModal(true)}
@@ -72,61 +72,60 @@ export default function HomePage() {
               <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
               </svg>
-              Download
+              {t('home.download')}
             </button>
           </div>
         </div>
       </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mt-8 animate-stagger-3">
-        <section className="md:col-span-7 space-y-4">
-          <div className="flex justify-between items-baseline mb-2">
-            <h2 className="text-xl font-bold text-primary-950 dark:text-white">Upcoming Trips</h2>
-            <button onClick={() => navigate('/bookings')} className="text-sm text-accent-dark dark:text-accent font-medium hover:underline underline-offset-4 transition-all">View All</button>
-          </div>
-          <div className="space-y-4">
-            {mockTrips.slice(0, 2).map((trip) => (
-              <article key={trip._id} className="transition-transform duration-300 hover:scale-[1.01]">
-                <TripCard trip={trip} onClick={() => navigate(`/trip/${trip._id}`)} />
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="md:col-span-5 grid grid-cols-2 gap-4 auto-rows-[minmax(100px,auto)]">
+      {/* Quick Assistance & Safety Actions */}
+      <section className="mt-8 animate-stagger-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <button 
             onClick={() => navigate('/help')}
-            className="col-span-2 bg-white dark:bg-gray-800 p-5 rounded-3xl flex flex-col items-start justify-center cursor-pointer transition-all duration-300 hover:-translate-y-1 shadow hover:shadow-lg group border border-transparent hover:border-primary-100 text-left"
+            className="bg-white dark:bg-gray-800 p-5 rounded-3xl flex flex-col items-start justify-between cursor-pointer transition-all duration-300 hover:-translate-y-1 shadow hover:shadow-lg group border border-transparent hover:border-primary-100 text-left"
           >
             <div className="bg-red-50 dark:bg-red-900/30 p-3 rounded-full mb-3 group-hover:scale-110 transition-transform">
               <Shield className="w-6 h-6 text-red-500 dark:text-red-400 stroke-[1.5]" />
             </div>
-            <h3 className="font-medium text-lg text-primary-950 dark:text-white">Emergency</h3>
-            <p className="text-xs text-primary-500 mt-1">Tap for immediate assistance</p>
+            <div>
+              <h3 className="font-medium text-lg text-primary-950 dark:text-white">{t('home.emergency')}</h3>
+              <p className="text-xs text-primary-500 mt-1">{t('home.emergencyDesc')}</p>
+            </div>
           </button>
           
           <button 
             onClick={() => navigate('/help')}
-            className="bg-white dark:bg-gray-800 p-5 rounded-3xl flex flex-col items-start justify-between cursor-pointer transition-all duration-300 hover:-translate-y-1 shadow hover:shadow-lg group border border-transparent hover:border-primary-100"
+            className="bg-white dark:bg-gray-800 p-5 rounded-3xl flex flex-col items-start justify-between cursor-pointer transition-all duration-300 hover:-translate-y-1 shadow hover:shadow-lg group border border-transparent hover:border-primary-100 text-left"
           >
-            <PhoneCall className="w-5 h-5 text-primary-600 dark:text-primary-400 mb-2 stroke-[1.5] group-hover:rotate-12 transition-transform" />
-            <span className="font-medium text-sm text-primary-900 dark:text-primary-100">Helpline</span>
+            <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-full mb-3 group-hover:scale-110 transition-transform">
+              <PhoneCall className="w-5 h-5 text-primary-600 dark:text-primary-400 stroke-[1.5] group-hover:rotate-12 transition-transform" />
+            </div>
+            <div>
+              <h3 className="font-medium text-lg text-primary-950 dark:text-white">{t('home.helpline')}</h3>
+              <p className="text-xs text-primary-500 mt-1">{t('home.helplineDesc')}</p>
+            </div>
           </button>
           
           <button 
             onClick={() => navigate('/help')}
-            className="bg-white dark:bg-gray-800 p-5 rounded-3xl flex flex-col items-start justify-between cursor-pointer transition-all duration-300 hover:-translate-y-1 shadow hover:shadow-lg group border border-transparent hover:border-primary-100"
+            className="bg-white dark:bg-gray-800 p-5 rounded-3xl flex flex-col items-start justify-between cursor-pointer transition-all duration-300 hover:-translate-y-1 shadow hover:shadow-lg group border border-transparent hover:border-primary-100 text-left"
           >
-            <Lightbulb className="w-5 h-5 text-accent dark:text-accent-dark mb-2 stroke-[1.5] group-hover:scale-110 transition-transform" />
-            <span className="font-medium text-sm text-primary-900 dark:text-primary-100">Tips</span>
+            <div className="bg-amber-50 dark:bg-amber-900/30 p-3 rounded-full mb-3 group-hover:scale-110 transition-transform">
+              <Lightbulb className="w-5 h-5 text-accent dark:text-accent-dark stroke-[1.5] group-hover:scale-110 transition-transform" />
+            </div>
+            <div>
+              <h3 className="font-medium text-lg text-primary-950 dark:text-white">{t('home.tips')}</h3>
+              <p className="text-xs text-primary-500 mt-1">{t('home.tipsDesc')}</p>
+            </div>
           </button>
-        </section>
-      </div>
+        </div>
+      </section>
 
       <Modal
         isOpen={showMapModal}
         onClose={() => setShowMapModal(false)}
-        title="Download Offline Map"
+        title={t('home.downloadOffline')}
       >
         <div className="space-y-4 pt-4">
           <Input 

@@ -308,7 +308,7 @@ export default function MapCard() {
 
   return (
     <div className="w-full flex flex-col space-y-3 font-sans">
-      {/* 1. Location Search Bar at Top of Map */}
+      {/* 1. Location Search Bar at Top of Map (Restored Exactly As Previous) */}
       <div ref={searchContainerRef} className="relative z-30">
         <form onSubmit={handleSearchSubmit} className="relative flex items-center">
           <div className="absolute left-3.5 text-gray-400 pointer-events-none">
@@ -383,7 +383,7 @@ export default function MapCard() {
 
       {/* Error / Notification Banner */}
       {errorMessage && (
-        <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 px-3 py-2 rounded-xl text-xs flex items-center justify-between shadow-sm animate-fade-in z-20">
+        <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 px-3.5 py-2.5 rounded-2xl text-xs flex items-center justify-between shadow-sm animate-fade-in z-20">
           <div className="flex items-center space-x-2">
             <AlertCircle size={15} className="text-amber-600 flex-shrink-0" />
             <span>{errorMessage}</span>
@@ -394,8 +394,8 @@ export default function MapCard() {
         </div>
       )}
 
-      {/* 2. Map Container with OpenStreetMap TileLayer & JaipurBoundary */}
-      <div className="w-full h-64 md:h-72 relative rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-inner z-10">
+      {/* 2. Map Container with Floating From-To Card */}
+      <div className="w-full h-80 md:h-96 relative rounded-3xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm z-10">
         <MapContainer 
           center={selectedDestination ? selectedDestination.coords : defaultJaipurCenter} 
           zoom={12} 
@@ -458,125 +458,148 @@ export default function MapCard() {
           )}
         </MapContainer>
 
-        {/* GPS Location Button Floating on Map */}
+        {/* GPS Location Button Floating on Top-Right of Map */}
         <button
           type="button"
           onClick={handleGetCurrentLocation}
           title="Use My Current GPS Location"
-          className="absolute bottom-3 right-3 z-[400] bg-white dark:bg-gray-800 p-2.5 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 transition"
+          className="absolute top-3.5 right-3.5 z-[400] bg-white dark:bg-gray-800 p-2.5 rounded-full shadow-md border border-gray-200 dark:border-gray-700 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 transition"
         >
           <Navigation size={18} className={isLocating ? 'animate-spin' : ''} />
         </button>
-      </div>
 
-      {/* 3. Directions & Journey Control Panel */}
-      <div className="bg-gray-50 dark:bg-gray-750/50 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700 space-y-2.5 text-xs">
-        {/* Route Points Overview: Current Location -> Destination */}
-        <div className="space-y-1.5">
-          {/* Starting Point */}
-          <div className="flex items-center space-x-2 text-gray-700 dark:text-gray-300">
-            <span className="w-2.5 h-2.5 rounded-full bg-green-500 flex-shrink-0"></span>
-            <span className="text-gray-400 font-medium">From:</span>
-            <span className="font-semibold text-gray-800 dark:text-gray-100 truncate">
-              {startPointName}
-            </span>
-          </div>
+        {/* Modern Floating "From → To" Journey Card Over Map */}
+        <div 
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          className="absolute bottom-3.5 left-3.5 right-3.5 sm:left-4 sm:right-auto sm:w-84 md:w-92 z-[400] bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl shadow-lg border border-gray-100/90 dark:border-gray-700/80 p-3 space-y-2.5 transition-all"
+        >
+          {/* From & To Visual Connection */}
+          <div className="relative pl-1 pr-1 space-y-1.5">
+            {/* Visual Vertical Route Connecting Indicator */}
+            <div className="absolute left-[11px] top-[14px] bottom-[14px] w-[1.5px] bg-gradient-to-b from-emerald-500 via-blue-500 to-rose-500 rounded-full"></div>
 
-          <div className="pl-1 text-gray-300 dark:text-gray-600 text-[10px] leading-none">
-            ↓
-          </div>
-
-          {/* Destination */}
-          <div className="flex items-center space-x-2 text-gray-700 dark:text-gray-300">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-500 flex-shrink-0"></span>
-            <span className="text-gray-400 font-medium">To:</span>
-            <span className="font-semibold text-gray-800 dark:text-gray-100 truncate">
-              {selectedDestination ? selectedDestination.name : 'Select a destination above'}
-            </span>
-          </div>
-        </div>
-
-        {/* Action Controls & Travel Mode */}
-        <div className="pt-2 border-t border-gray-200/70 dark:border-gray-700 flex flex-wrap items-center justify-between gap-2">
-          {/* Travel Mode Toggle */}
-          <div className="flex bg-white dark:bg-gray-800 p-0.5 rounded-lg border border-gray-200 dark:border-gray-700">
-            <button
-              type="button"
-              onClick={() => setTravelMode('drive')}
-              className={`px-2 py-1 rounded-md flex items-center space-x-1 text-[11px] font-semibold transition ${
-                travelMode === 'drive'
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-800'
-              }`}
-            >
-              <Car size={13} />
-              <span>Drive</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setTravelMode('walk')}
-              className={`px-2 py-1 rounded-md flex items-center space-x-1 text-[11px] font-semibold transition ${
-                travelMode === 'walk'
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-800'
-              }`}
-            >
-              <Footprints size={13} />
-              <span>Walk</span>
-            </button>
-          </div>
-
-          {/* Buttons: Get Directions & Clear */}
-          <div className="flex items-center space-x-2">
-            {routeInfo && (
-              <button
-                type="button"
-                onClick={handleClearRoute}
-                className="px-2.5 py-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 text-xs font-medium flex items-center space-x-1 transition"
-              >
-                <RotateCcw size={13} />
-                <span>Clear</span>
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={handleGetDirections}
-              disabled={!selectedDestination}
-              className={`px-4 py-1.5 rounded-xl font-bold text-xs flex items-center space-x-1.5 transition shadow-sm ${
-                selectedDestination
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-              }`}
-            >
-              <Compass size={14} />
-              <span>Get Directions</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Route Stats Summary (when route is calculated) */}
-        {routeInfo && (
-          <div className="mt-2 p-2.5 rounded-xl bg-blue-50/80 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/40 flex items-center justify-between animate-fade-in">
-            <div className="flex items-center space-x-4">
-              <div>
-                <span className="text-[10px] text-gray-400 block">Distance</span>
-                <span className="font-extrabold text-blue-700 dark:text-blue-300 text-sm">
-                  {routeInfo.distance}
-                </span>
+            {/* FROM Section */}
+            <div className="flex items-center space-x-2.5 relative">
+              <div className="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950/60 border-2 border-emerald-500 flex items-center justify-center flex-shrink-0 z-10 bg-white dark:bg-gray-800">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-600"></div>
               </div>
-              <div className="border-l border-blue-200 dark:border-blue-800 pl-4">
-                <span className="text-[10px] text-gray-400 block">Est. Time</span>
-                <span className="font-extrabold text-blue-700 dark:text-blue-300 text-sm">
-                  {routeInfo.duration}
+              <div className="min-w-0 flex-1">
+                <span className="text-[9px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block leading-none mb-0.5">
+                  From
                 </span>
+                <p className="text-xs font-bold text-gray-900 dark:text-white truncate">
+                  {startPointName}
+                </p>
               </div>
             </div>
-            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">
-              Route Active
-            </span>
+
+            {/* Direction Indicator Icon in the Middle */}
+            <div className="flex items-center space-x-2.5 pl-[7px] py-0.5">
+              <div className="w-2.5 h-2.5 flex items-center justify-center text-blue-500 dark:text-blue-400 z-10">
+                <Navigation size={10} className="rotate-180" />
+              </div>
+            </div>
+
+            {/* TO Section */}
+            <div className="flex items-center space-x-2.5 relative">
+              <div className="w-4 h-4 rounded-full bg-rose-100 dark:bg-rose-950/60 border-2 border-rose-500 flex items-center justify-center flex-shrink-0 z-10 bg-white dark:bg-gray-800">
+                <div className="w-1.5 h-1.5 rounded-full bg-rose-600"></div>
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[9px] font-extrabold uppercase tracking-wider text-rose-600 dark:text-rose-400 block leading-none mb-0.5">
+                  To (Destination)
+                </span>
+                <p className={`text-xs font-bold truncate ${selectedDestination ? 'text-gray-900 dark:text-white' : 'text-gray-400 italic font-normal'}`}>
+                  {selectedDestination ? selectedDestination.name : 'Select a destination above'}
+                </p>
+              </div>
+            </div>
           </div>
-        )}
+
+          {/* Action Controls & Travel Mode */}
+          <div className="pt-2 border-t border-gray-100 dark:border-gray-700/70 flex items-center justify-between gap-2">
+            {/* Travel Mode Toggle */}
+            <div className="flex bg-gray-100 dark:bg-gray-700/60 p-0.5 rounded-xl border border-gray-200/60 dark:border-gray-700">
+              <button
+                type="button"
+                onClick={() => setTravelMode('drive')}
+                className={`px-2.5 py-1 rounded-lg flex items-center space-x-1 text-[11px] font-semibold transition ${
+                  travelMode === 'drive'
+                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-xs'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-800'
+                }`}
+              >
+                <Car size={12} />
+                <span>Drive</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTravelMode('walk')}
+                className={`px-2.5 py-1 rounded-lg flex items-center space-x-1 text-[11px] font-semibold transition ${
+                  travelMode === 'walk'
+                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-xs'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-800'
+                }`}
+              >
+                <Footprints size={12} />
+                <span>Walk</span>
+              </button>
+            </div>
+
+            {/* Buttons: Clear & Get Directions */}
+            <div className="flex items-center space-x-1.5">
+              {routeInfo && (
+                <button
+                  type="button"
+                  onClick={handleClearRoute}
+                  className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg transition"
+                  title="Clear Route"
+                >
+                  <RotateCcw size={13} />
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleGetDirections}
+                disabled={!selectedDestination}
+                className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center space-x-1 transition shadow-xs ${
+                  selectedDestination
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-blue-500/20'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                <Compass size={13} />
+                <span>Get Directions</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Active Route Stats Badge */}
+          {routeInfo && (
+            <div className="p-2 rounded-xl bg-blue-50/90 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-900/40 flex items-center justify-between text-xs animate-fade-in">
+              <div className="flex items-center space-x-3">
+                <div>
+                  <span className="text-[9px] text-gray-400 block leading-none">Distance</span>
+                  <span className="font-extrabold text-blue-700 dark:text-blue-300 text-xs">
+                    {routeInfo.distance}
+                  </span>
+                </div>
+                <div className="border-l border-blue-200 dark:border-blue-800 pl-3">
+                  <span className="text-[9px] text-gray-400 block leading-none">Est. Time</span>
+                  <span className="font-extrabold text-blue-700 dark:text-blue-300 text-xs">
+                    {routeInfo.duration}
+                  </span>
+                </div>
+              </div>
+              <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/40 px-2 py-0.5 rounded-full">
+                Active
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
